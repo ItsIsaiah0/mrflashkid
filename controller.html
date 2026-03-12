@@ -1,1 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
 
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stream Remote</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            background: #1e1e1e;
+            color: white;
+            text-align: center;
+            padding: 20px;
+            margin: 0;
+        }
+
+        .panel {
+            background: #2d2d2d;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        button {
+            font-size: 22px;
+            padding: 15px 25px;
+            margin: 10px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            color: white;
+            font-weight: bold;
+            width: 40%;
+        }
+
+        input {
+            font-size: 22px;
+            padding: 10px;
+            margin: 10px;
+            border-radius: 5px;
+            border: none;
+            text-align: center;
+            width: 60%;
+        }
+
+        #add {
+            background: #4CAF50;
+        }
+
+        #sub {
+            background: #f44336;
+        }
+
+        #pause {
+            background: #ff9800;
+            width: 90%;
+            padding: 20px;
+        }
+
+        #login-btn {
+            background: #2196F3;
+            width: 65%;
+        }
+
+        h1 {
+            font-size: 50px;
+            margin: 10px 0;
+        }
+
+        h2 {
+            margin-top: 0;
+            color: #aaa;
+            font-size: 18px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="login-panel" class="panel">
+        <h2>Stream Login</h2>
+        <input type="text" id="secret-word" placeholder="Enter Password">
+        <br>
+        <button id="login-btn">Unlock Controls</button>
+        <p id="login-error" style="color: #ff5252; display: none; font-weight: bold;">Incorrect password.</p>
+    </div>
+
+    <div id="control-panel" style="display: none;">
+        <div class="panel">
+            <h2>Run Counter</h2>
+            <h1 id="run-display">0</h1>
+            <button id="sub">-1</button>
+            <button id="add">+1</button>
+        </div>
+
+        <div class="panel">
+            <h2>Stream Controls</h2>
+            <button id="pause">⏸ Pause Stream</button>
+        </div>
+    </div>
+
+    <script type="module" src="script.js"></script>
+</body>
+
+</html>

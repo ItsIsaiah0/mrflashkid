@@ -1,1 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
 
+<head>
+    <meta charset="UTF-8">
+    <title>Stream Overlay</title>
+    <style>
+        /* This makes the background transparent for OBS */
+        body {
+            background-color: transparent;
+            margin: 0;
+            overflow: hidden;
+            /* Stops scrollbars from showing up in OBS */
+            font-family: 'Impact', sans-serif;
+        }
+
+        /* Styling for the Run Counter */
+        #run-counter {
+            color: #ffffff;
+            font-size: 80px;
+            text-shadow: 4px 4px 0px #000, -2px -2px 0px #000, 2px -2px 0px #000, -2px 2px 0px #000;
+            margin: 30px;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        #pause-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: rgba(0, 0, 0, 0.85);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            color: #00a2ff;
+            font-size: 100px;
+            text-align: center;
+            text-shadow: 4px 4px 0px #000;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="run-counter">Runs: 0</div>
+
+    <div id="pause-screen">
+        STREAM PAUSED<br>
+        <span style="font-size: 40px; color: white;">We'll be right back!</span>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyChLFvlJ-_-a56lqE3U7IgegyRER7OAWZc",
+            authDomain: "stream-overlay-5eba9.firebaseapp.com",
+            databaseURL: "https://stream-overlay-5eba9-default-rtdb.firebaseio.com",
+            projectId: "stream-overlay-5eba9",
+            storageBucket: "stream-overlay-5eba9.firebasestorage.app",
+            messagingSenderId: "11285905775",
+            appId: "1:11285905775:web:b020cbb736df0a9b68a89a"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        const runsRef = ref(db, 'streamData/runs');
+        const pauseRef = ref(db, 'streamData/isPaused');
+
+        onValue(runsRef, (snapshot) => {
+            if (snapshot.exists()) {
+                document.getElementById('run-counter').innerText = "Runs: " + snapshot.val();
+            }
+        });
+
+        onValue(pauseRef, (snapshot) => {
+            if (snapshot.exists()) {
+                const isPaused = snapshot.val();
+                const pauseScreen = document.getElementById('pause-screen');
+
+                if (isPaused === true) {
+                    pauseScreen.style.display = "flex";
+                } else {
+                    pauseScreen.style.display = "none";
+                }
+            }
+        });
+    </script>
+</body>
+
+</html>
