@@ -6,18 +6,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Stream Remote</title>
     <style>
-        /* Header layout to align Toggle (left), Title (center), Chevron (right) */
         .panel-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
             padding-bottom: 10px;
             border-bottom: 1px solid #444;
-            /* Optional line to separate header from content */
             margin-bottom: 15px;
         }
 
-        /* --- THE CSS TOGGLE SWITCH --- */
         .switch {
             position: relative;
             display: inline-block;
@@ -25,14 +22,12 @@
             height: 26px;
         }
 
-        /* Hide the default HTML checkbox */
         .switch input {
             opacity: 0;
             width: 0;
             height: 0;
         }
 
-        /* The slider track (defaults to Red for OFF) */
         .slider {
             position: absolute;
             cursor: pointer;
@@ -45,7 +40,6 @@
             border-radius: 26px;
         }
 
-        /* The white slider circle */
         .slider:before {
             position: absolute;
             content: "";
@@ -58,7 +52,6 @@
             border-radius: 50%;
         }
 
-        /* When checked (ON), turn the track Green and slide the circle right */
         input:checked+.slider {
             background-color: #4CAF50;
         }
