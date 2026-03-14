@@ -102,11 +102,16 @@ document.getElementById('sub').onclick = () => {
 
 document.getElementById('pause').onclick = () => set(pauseRef, !isPaused);
 
+
 document.getElementById('update-label-btn').onclick = () => {
-    const newLabel = document.getElementById('custom-label-input').value;
-    if (newLabel.trim() !== "") {
+    let newLabel = document.getElementById('custom-label-input').value.trim();
+    if (newLabel !== "") { 
+        if (!newLabel.endsWith(':')) {
+            newLabel += ':';
+        }
         set(labelRef, newLabel);
-        document.getElementById('custom-label-input').value = "" + ":";
+        
+        document.getElementById('custom-label-input').value = ""; 
     }
 };
 
