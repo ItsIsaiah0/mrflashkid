@@ -6,6 +6,67 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Stream Remote</title>
     <style>
+        /* Header layout to align Toggle (left), Title (center), Chevron (right) */
+        .panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #444;
+            /* Optional line to separate header from content */
+            margin-bottom: 15px;
+        }
+
+        /* --- THE CSS TOGGLE SWITCH --- */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 26px;
+        }
+
+        /* Hide the default HTML checkbox */
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        /* The slider track (defaults to Red for OFF) */
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #f44336;
+            transition: 0.3s;
+            border-radius: 26px;
+        }
+
+        /* The white slider circle */
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: 0.3s;
+            border-radius: 50%;
+        }
+
+        /* When checked (ON), turn the track Green and slide the circle right */
+        input:checked+.slider {
+            background-color: #4CAF50;
+        }
+
+        input:checked+.slider:before {
+            transform: translateX(24px);
+        }
+
         body {
             font-family: sans-serif;
             background: #1e1e1e;
@@ -59,6 +120,13 @@
             padding: 20px;
         }
 
+        #update-label-btn,
+        #set-number-btn {
+            background: #2196F3;
+            width: 60%;
+            font-size: 18px;
+        }
+
         #login-btn {
             background: #2196F3;
             width: 65%;
@@ -80,26 +148,59 @@
 </head>
 
 <body>
-
-    <div id="login-panel" class="panel">
-        <h2>Stream Login</h2>
-        <input type="text" id="secret-word" placeholder="Enter Password">
+    <div id="login-panel" class="panel" style="display: block;">
+        <h2>Stream Remote Login</h2>
+        <input type="email" id="login-email" placeholder="Email">
+        <input type="password" id="login-password" placeholder="Password">
         <br>
-        <button id="login-btn">Unlock Controls</button>
-        <p id="login-error" style="color: #ff5252; display: none; font-weight: bold;">Incorrect password.</p>
+        <button id="login-btn">Secure Login</button>
+        <p id="login-error" style="color: #ff5252; display: none; font-weight: bold;">Access Denied.</p>
     </div>
 
     <div id="control-panel" style="display: none;">
-        <div class="panel">
-            <h2>Run Counter</h2>
-            <h1 id="run-display">0</h1>
-            <button id="sub">-1</button>
-            <button id="add">+1</button>
-        </div>
 
         <div class="panel">
             <h2>Stream Controls</h2>
             <button id="pause">⏸ Pause Stream</button>
+        </div>
+
+        <div class="panel">
+            <div class="panel-header">
+                <label class="switch">
+                    <input type="checkbox" id="visibility-toggle" checked>
+                    <span class="slider"></span>
+                </label>
+
+                <h2 style="margin: 0;">Counter Controls</h2>
+
+                <span id="chevron-btn"
+                    style="cursor: pointer; transition: transform 0.3s; display: flex; align-items: center;">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                </span>
+            </div>
+
+            <div id="counter-content" style="display: block;">
+                <h1 id="counter-display">0</h1>
+                <button id="sub">-1</button>
+                <button id="add">+1</button>
+
+                <input type="text" id="custom-label-input" placeholder="e.g., Deaths:, Wins:">
+                <button id="update-label-btn">Set Label</button>
+
+                <input type="number" id="exact-number-input" placeholder="Type specific #">
+                <button id="set-number-btn">Set #</button>
+
+                <div style="margin-top: 15px;">
+                    <label for="color-picker"
+                        style="font-size: 20px; font-weight: bold; margin-right: 10px; vertical-align: middle;">Text
+                        Color:</label>
+                    <input type="color" id="color-picker" value="#ffffff"
+                        style="width: 50px; height: 50px; padding: 0; cursor: pointer; border: none; vertical-align: middle;">
+                </div>
+            </div>
         </div>
     </div>
 

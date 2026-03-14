@@ -5,7 +5,6 @@
     <meta charset="UTF-8">
     <title>Stream Overlay</title>
     <style>
-
         body {
             background-color: transparent;
             margin: 0;
@@ -13,8 +12,8 @@
             font-family: 'Impact', sans-serif;
         }
 
-        #run-counter {
-            color: #c045ab;
+        #counter {
+            color: #ffffff;
             font-size: 65px;
             text-shadow: 4px 4px 0px #000, -2px -2px 0px #000, 2px -2px 0px #000, -2px 2px 0px #000;
             margin: 30px;
@@ -45,7 +44,10 @@
 
 <body>
 
-    <div id="run-counter">Runs: 0</div>
+    <div id="counter">
+        <span id="overlay-label">Counter:</span>
+        <span id="overlay-number">0</span>
+    </div>
 
     <div id="pause-screen">
         STREAM PAUSED<br>
@@ -69,12 +71,26 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        const runsRef = ref(db, 'streamData/runs');
+        const countRef = ref(db, 'streamData/counter');
+        const labelRef = ref(db, 'streamData/label');
         const pauseRef = ref(db, 'streamData/isPaused');
+        const colorRef = ref(db, 'streamData/color');
 
-        onValue(runsRef, (snapshot) => {
+        onValue(countRef, (snapshot) => {
             if (snapshot.exists()) {
-                document.getElementById('run-counter').innerText = "Runs: " + snapshot.val();
+                document.getElementById('overlay-number').innerText = snapshot.val();
+            }
+        });
+
+        onValue(labelRef, (snapshot) => {
+            if (snapshot.exists()) {
+                document.getElementById('overlay-label').innerText = snapshot.val() + " ";
+            }
+        });
+
+        onValue(colorRef, (snapshot) => {
+            if (snapshot.exists()) {
+                document.getElementById('counter').style.color = snapshot.val();
             }
         });
 
@@ -88,6 +104,18 @@
                 } else {
                     pauseScreen.style.display = "none";
                 }
+            }
+        });
+        const visibilityRef = ref(db, 'streamData/isCounterVisible');
+
+        onValue(visibilityRef, (snapshot) => {
+            const isVisible = snapshot.exists() ? snapshot.val() : true;
+            const counterDiv = document.getElementById('counter');
+
+            if (isVisible) {
+                counterDiv.style.display = "block";
+            } else {
+                counterDiv.style.display = "none";
             }
         });
     </script>

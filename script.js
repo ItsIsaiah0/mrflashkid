@@ -1,5 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
 import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
+import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyChLFvlJ-_-a56lqE3U7IgegyRER7OAWZc",
@@ -13,71 +14,127 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
+const auth = getAuth(app);
 
-const runsRef = ref(db, 'streamData/runs');
+const countRef = ref(db, 'streamData/counter');
+const labelRef = ref(db, 'streamData/label');
 const pauseRef = ref(db, 'streamData/isPaused');
+const colorRef = ref(db, 'streamData/color');
+const visibilityRef = ref(db, 'streamData/isCounterVisible');
 
-let currentRuns = 0;
+let currentCount = 0;
 let isPaused = false;
-
-const SECRET_HASH = "96830a291ad510848867471d7ddfc11474b333a8241c4667a2de229e9c0c2644";
-
-async function hashPassword(password) {
-    const msgUint8 = new TextEncoder().encode(password);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-}
+let isCounterVisible = true;
 
 const loginPanel = document.getElementById('login-panel');
 const controlPanel = document.getElementById('control-panel');
 const loginError = document.getElementById('login-error');
 
-document.getElementById('login-btn').onclick = async () => {
-    const typedWord = document.getElementById('secret-word').value;
-    
-    const typedHash = await hashPassword(typedWord);
-    
-    if (typedHash === SECRET_HASH) {
-
+onAuthStateChanged(auth, (user) => {
+    if (user) {
         loginPanel.style.display = 'none';
         controlPanel.style.display = 'block';
+
+        startDatabaseListeners();
     } else {
-
-        loginError.style.display = 'block';
-    }
-};
-
-
-onValue(runsRef, (snapshot) => {
-    if (snapshot.exists()) {
-        currentRuns = snapshot.val();
-        document.getElementById('run-display').innerText = currentRuns;
+        loginPanel.style.display = 'block';
+        controlPanel.style.display = 'none';
     }
 });
 
-onValue(pauseRef, (snapshot) => {
-    if (snapshot.exists()) {
-        isPaused = snapshot.val();
-        const pauseBtn = document.getElementById('pause');
-        if (isPaused) {
-            pauseBtn.innerText = "▶ Resume Stream";
-            pauseBtn.style.background = "#4CAF50"; 
-        } else {
-            pauseBtn.innerText = "⏸ Pause Stream";
-            pauseBtn.style.background = "#ff9800"; 
+document.getElementById('login-btn').onclick = () => {
+    const email = document.getElementById('login-email').value;
+    const password = document.getElementById('login-password').value;
+
+    loginError.style.display = 'none';
+
+    signInWithEmailAndPassword(auth, email, password)
+        .catch((error) => {
+            console.error(error);
+            loginError.style.display = 'block';
+            loginError.innerText = "Access Denied. Check your email/password.";
+        });
+};
+
+
+function startDatabaseListeners() {
+    onValue(countRef, (snapshot) => {
+        if (snapshot.exists()) {
+            currentCount = snapshot.val();
+            document.getElementById('counter-display').innerText = currentCount;
         }
+    });
+
+    onValue(pauseRef, (snapshot) => {
+        if (snapshot.exists()) {
+            isPaused = snapshot.val();
+            const pauseBtn = document.getElementById('pause');
+            if (isPaused) {
+                pauseBtn.innerText = "▶ Resume Stream";
+                pauseBtn.style.background = "#4CAF50";
+            } else {
+                pauseBtn.innerText = "⏸ Pause Stream";
+                pauseBtn.style.background = "#ff9800";
+            }
+        }
+    });
+
+    onValue(colorRef, (snapshot) => {
+        if (snapshot.exists()) {
+            document.getElementById('color-picker').value = snapshot.val();
+        }
+    });
+
+    onValue(visibilityRef, (snapshot) => {
+        if (snapshot.exists()) {
+            isCounterVisible = snapshot.val();
+            document.getElementById('visibility-toggle').checked = isCounterVisible;
+        } else {
+            document.getElementById('visibility-toggle').checked = true;
+        }
+    });
+}
+
+document.getElementById('add').onclick = () => set(countRef, currentCount + 1);
+document.getElementById('sub').onclick = () => {
+    if (currentCount > 0) set(countRef, currentCount - 1);
+};
+
+document.getElementById('pause').onclick = () => set(pauseRef, !isPaused);
+
+document.getElementById('update-label-btn').onclick = () => {
+    const newLabel = document.getElementById('custom-label-input').value;
+    if (newLabel.trim() !== "") {
+        set(labelRef, newLabel);
+        document.getElementById('custom-label-input').value = ""; // Clear input
     }
+};
+
+document.getElementById('set-number-btn').onclick = () => {
+    const exactNumber = parseInt(document.getElementById('exact-number-input').value);
+    if (!isNaN(exactNumber) && exactNumber >= 0) {
+        set(countRef, exactNumber);
+        document.getElementById('exact-number-input').value = ""; // Clear input
+    }
+};
+
+document.getElementById('color-picker').addEventListener('input', (event) => {
+    set(colorRef, event.target.value);
 });
 
-document.getElementById('add').onclick = () => {
-    set(runsRef, currentRuns + 1);
+document.getElementById('visibility-toggle').onchange = (event) => {
+    set(visibilityRef, event.target.checked);
 };
 
-document.getElementById('sub').onclick = () => {
-    if (currentRuns > 0) set(runsRef, currentRuns - 1);
-};
+const chevronBtn = document.getElementById('chevron-btn');
+const counterContent = document.getElementById('counter-content');
 
-document.getElementById('pause').onclick = () => {
-    set(pauseRef, !isPaused);
+chevronBtn.onclick = () => {
+    if (counterContent.style.display !== 'none') {
+        counterContent.style.display = 'none';
+        chevronBtn.style.transform = 'rotate(-90deg)';
+    } else {
+        counterContent.style.display = 'block';
+        chevronBtn.style.transform = 'rotate(0deg)';
+    }
 };
