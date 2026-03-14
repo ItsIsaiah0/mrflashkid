@@ -106,7 +106,7 @@ document.getElementById('update-label-btn').onclick = () => {
     const newLabel = document.getElementById('custom-label-input').value;
     if (newLabel.trim() !== "") {
         set(labelRef, newLabel);
-        document.getElementById('custom-label-input').value = ""; // Clear input
+        document.getElementById('custom-label-input').value = "" + ":";
     }
 };
 
@@ -114,7 +114,7 @@ document.getElementById('set-number-btn').onclick = () => {
     const exactNumber = parseInt(document.getElementById('exact-number-input').value);
     if (!isNaN(exactNumber) && exactNumber >= 0) {
         set(countRef, exactNumber);
-        document.getElementById('exact-number-input').value = ""; // Clear input
+        document.getElementById('exact-number-input').value = "";
     }
 };
 
