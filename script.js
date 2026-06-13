@@ -93,7 +93,7 @@ const passwordInput = document.getElementById("login-password");
 const togglePasswordButton = document.getElementById("toggle-password");
 
 const widgetControls = [
-    { id: "counter-color", widget: "counter", field: "color", type: "text" },
+    { id: "counter-color", widget: "counter", field: "color", type: "color" },
     { id: "counter-anchor", widget: "counter", field: "anchor", type: "select" },
     { id: "counter-x", widget: "counter", field: "x", type: "number" },
     { id: "counter-y", widget: "counter", field: "y", type: "number" },
@@ -114,7 +114,7 @@ const widgetControls = [
     { id: "custom-text-y", widget: "customText", field: "y", type: "number" },
     { id: "custom-text-scale", widget: "customText", field: "scale", type: "number" },
     { id: "custom-text-font-size", widget: "customText", field: "fontSize", type: "number" },
-    { id: "custom-text-color", widget: "customText", field: "color", type: "text" },
+    { id: "custom-text-color", widget: "customText", field: "color", type: "color" },
     { id: "chat-visible", widget: "twitchChat", field: "visible", type: "checkbox" },
     { id: "chat-channel", widget: "twitchChat", field: "channel", type: "text" },
     { id: "chat-parent-domain", widget: "twitchChat", field: "parentDomain", type: "text" },
@@ -265,13 +265,10 @@ function bindWidgetControls() {
         const element = document.getElementById(control.id);
         if (!element) return;
 
-        const eventName = control.type === "checkbox" || control.type === "select" ? "change" : "input";
-
-        element.addEventListener(eventName, () => {
-            const value = readControlValue(element, control.type);
-            if (typeof value === "undefined") return;
-
-            updateWidget(control.widget, { [control.field]: value });
+        getControlEventNames(control.type).forEach((eventName) => {
+            element.addEventListener(eventName, () => {
+                handleWidgetControlChange(element, control);
+            });
         });
     });
 
@@ -302,6 +299,19 @@ function bindWidgetControls() {
             });
         });
     });
+}
+
+function getControlEventNames(type) {
+    if (type === "color") return ["input", "change"];
+    if (type === "checkbox" || type === "select") return ["change"];
+    return ["input"];
+}
+
+function handleWidgetControlChange(element, control) {
+    const value = readControlValue(element, control.type);
+    if (typeof value === "undefined") return;
+
+    updateWidget(control.widget, { [control.field]: value });
 }
 
 function getMoveDelta(widget, direction) {
@@ -347,6 +357,10 @@ function readControlValue(element, type) {
         if (element.value === "") return undefined;
         const value = Number(element.value);
         return Number.isFinite(value) ? value : undefined;
+    }
+
+    if (type === "color") {
+        return /^#[0-9a-f]{6}$/i.test(element.value) ? element.value : undefined;
     }
 
     return element.value;
