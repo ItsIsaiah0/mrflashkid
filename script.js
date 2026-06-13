@@ -73,6 +73,7 @@ const widgetRefs = {
     customText: ref(db, "streamData/widgets/customText"),
     twitchChat: ref(db, "streamData/widgets/twitchChat")
 };
+const widgetFieldRefs = {};
 
 let currentCount = 0;
 let isPaused = false;
@@ -264,6 +265,7 @@ function bindWidgetControls() {
     widgetControls.forEach((control) => {
         const element = document.getElementById(control.id);
         if (!element) return;
+        if (control.type === "color") return;
 
         getControlEventNames(control.type).forEach((eventName) => {
             element.addEventListener(eventName, () => {
@@ -271,6 +273,8 @@ function bindWidgetControls() {
             });
         });
     });
+
+    bindWidgetColorControls();
 
     document.querySelectorAll("[data-move-widget]").forEach((button) => {
         button.addEventListener("click", () => {
@@ -301,8 +305,22 @@ function bindWidgetControls() {
     });
 }
 
+function bindWidgetColorControls() {
+    widgetControls
+        .filter((control) => control.type === "color")
+        .forEach((control) => {
+            const element = document.getElementById(control.id);
+            if (!element) return;
+
+            ["input", "change"].forEach((eventName) => {
+                element.addEventListener(eventName, () => {
+                    handleWidgetControlChange(element, control);
+                });
+            });
+        });
+}
+
 function getControlEventNames(type) {
-    if (type === "color") return ["input", "change"];
     if (type === "checkbox" || type === "select") return ["change"];
     return ["input"];
 }
@@ -311,7 +329,7 @@ function handleWidgetControlChange(element, control) {
     const value = readControlValue(element, control.type);
     if (typeof value === "undefined") return;
 
-    updateWidget(control.widget, { [control.field]: value });
+    setWidgetField(control.widget, control.field, value);
 }
 
 function getMoveDelta(widget, direction) {
@@ -379,6 +397,29 @@ function updateWidget(widget, fields) {
     updateValue(widgetRefs[widget], fields).catch((error) => {
         console.error(`Could not update ${widget}.`, error);
     });
+}
+
+function setWidgetField(widget, field, value) {
+    if (!DEFAULT_WIDGETS[widget] || !Object.prototype.hasOwnProperty.call(DEFAULT_WIDGETS[widget], field)) return;
+
+    widgetStates[widget] = {
+        ...widgetStates[widget],
+        [field]: value
+    };
+
+    setValue(getWidgetFieldRef(widget, field), value).catch((error) => {
+        console.error(`Could not update ${widget}.${field}.`, error);
+    });
+}
+
+function getWidgetFieldRef(widget, field) {
+    const cacheKey = `${widget}.${field}`;
+
+    if (!widgetFieldRefs[cacheKey]) {
+        widgetFieldRefs[cacheKey] = ref(db, `streamData/widgets/${widget}/${field}`);
+    }
+
+    return widgetFieldRefs[cacheKey];
 }
 
 function setValue(firebaseRef, value) {
