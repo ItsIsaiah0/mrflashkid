@@ -274,7 +274,8 @@ function bindWidgetControls() {
         });
     });
 
-    bindWidgetColorControls();
+    bindColorPicker("counter-color", "counter");
+    bindColorPicker("custom-text-color", "customText");
 
     document.querySelectorAll("[data-move-widget]").forEach((button) => {
         button.addEventListener("click", () => {
@@ -305,19 +306,19 @@ function bindWidgetControls() {
     });
 }
 
-function bindWidgetColorControls() {
-    widgetControls
-        .filter((control) => control.type === "color")
-        .forEach((control) => {
-            const element = document.getElementById(control.id);
-            if (!element) return;
+function bindColorPicker(inputId, widget) {
+    const element = document.getElementById(inputId);
+    if (!element) return;
 
-            ["input", "change"].forEach((eventName) => {
-                element.addEventListener(eventName, () => {
-                    handleWidgetControlChange(element, control);
-                });
-            });
-        });
+    const setColor = () => {
+        const color = readControlValue(element, "color");
+        if (typeof color === "undefined") return;
+
+        setWidgetField(widget, "color", color);
+    };
+
+    element.addEventListener("input", setColor);
+    element.addEventListener("change", setColor);
 }
 
 function getControlEventNames(type) {
