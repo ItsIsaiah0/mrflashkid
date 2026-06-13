@@ -5,21 +5,121 @@
     <meta charset="UTF-8">
     <title>Stream Overlay</title>
     <style>
+        * {
+            box-sizing: border-box;
+        }
+
         body {
             background-color: transparent;
             margin: 0;
             overflow: hidden;
-            font-family: 'Impact', sans-serif;
+            font-family: Impact, "Arial Black", sans-serif;
         }
 
         #counter {
             color: #ffffff;
             font-size: 65px;
-            text-shadow: 4px 4px 0px #000, -2px -2px 0px #000, 2px -2px 0px #000, -2px 2px 0px #000;
-            margin: 30px;
+            text-shadow: 4px 4px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000;
+            margin: 0;
             position: absolute;
-            top: 0;
-            right: 0;
+            top: 30px;
+            right: 30px;
+            transform-origin: top right;
+            z-index: 20;
+        }
+
+        .widget {
+            position: absolute;
+            transform-origin: top left;
+            z-index: 25;
+        }
+
+        #social-promo {
+            align-items: flex-start;
+            color: #ffffff;
+            display: none;
+            flex-direction: column;
+            gap: 12px;
+            line-height: 1;
+            padding: 0;
+            text-shadow: 3px 3px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000;
+        }
+
+        #social-promo.is-visible {
+            display: flex;
+        }
+
+        #social-promo.horizontal {
+            align-items: center;
+            flex-direction: row;
+            gap: 20px;
+        }
+
+        #social-promo.has-background {
+            background: rgba(0, 0, 0, 0.62);
+            border: 1px solid rgba(255, 255, 255, 0.22);
+            border-radius: 8px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+            padding: 14px 16px;
+        }
+
+        .social-row {
+            align-items: center;
+            display: flex;
+            gap: 12px;
+            min-height: 42px;
+            white-space: nowrap;
+        }
+
+        .social-row.hidden {
+            display: none;
+        }
+
+        .social-icon {
+            display: block;
+            filter: drop-shadow(3px 3px 0 rgba(0, 0, 0, 0.95));
+            height: 40px;
+            width: 40px;
+        }
+
+        .social-text {
+            font-size: 36px;
+        }
+
+        #custom-text-widget {
+            color: #ffffff;
+            display: none;
+            font-size: 52px;
+            line-height: 1.1;
+            max-width: 92vw;
+            overflow-wrap: anywhere;
+            text-shadow: 4px 4px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000;
+            white-space: pre-wrap;
+        }
+
+        #custom-text-widget.is-visible {
+            display: block;
+        }
+
+        #twitch-chat-widget {
+            background: rgba(0, 0, 0, 0.55);
+            border: 1px solid rgba(255, 255, 255, 0.22);
+            border-radius: 8px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+            display: none;
+            overflow: hidden;
+            pointer-events: auto;
+        }
+
+        #twitch-chat-widget.is-visible {
+            display: block;
+        }
+
+        #twitch-chat-frame {
+            border: 0;
+            display: block;
+            height: 100%;
+            width: 100%;
         }
 
         #pause-screen {
@@ -37,16 +137,32 @@
             color: #00a2ff;
             font-size: 100px;
             text-align: center;
-            text-shadow: 4px 4px 0px #000;
+            text-shadow: 4px 4px 0 #000;
         }
     </style>
 </head>
 
 <body>
-
     <div id="counter">
         <span id="overlay-label">Counter:</span>
         <span id="overlay-number">0</span>
+    </div>
+
+    <div id="social-promo" class="widget">
+        <div id="youtube-row" class="social-row">
+            <img class="social-icon" src="assets/youtube.svg" alt="">
+            <span id="youtube-text" class="social-text">Mr_Flashkid</span>
+        </div>
+        <div id="twitch-row" class="social-row">
+            <img class="social-icon" src="assets/twitch.svg" alt="">
+            <span id="twitch-text" class="social-text">Mr_Flashkid</span>
+        </div>
+    </div>
+
+    <div id="custom-text-widget" class="widget"></div>
+
+    <div id="twitch-chat-widget" class="widget">
+        <iframe id="twitch-chat-frame" title="Twitch chat"></iframe>
     </div>
 
     <div id="pause-screen">
@@ -68,55 +184,294 @@
             appId: "1:11285905775:web:b020cbb736df0a9b68a89a"
         };
 
+        const DEFAULT_WIDGETS = {
+            counter: {
+                color: "#ffffff",
+                x: 30,
+                y: 30,
+                scale: 1,
+                fontSize: 65,
+                anchor: "right"
+            },
+            socialPromo: {
+                visible: true,
+                youtubeVisible: true,
+                twitchVisible: true,
+                text: "Mr_Flashkid",
+                x: 24,
+                y: 130,
+                scale: 1,
+                layout: "vertical",
+                darkBackground: true
+            },
+            customText: {
+                visible: false,
+                text: "",
+                x: 24,
+                y: 250,
+                scale: 1,
+                fontSize: 52,
+                color: "#ffffff"
+            },
+            twitchChat: {
+                visible: false,
+                x: 24,
+                y: 360,
+                width: 360,
+                height: 520,
+                scale: 1,
+                channel: "",
+                parentDomain: "mrflashkid.live",
+                customUrl: ""
+            }
+        };
+
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        const countRef = ref(db, 'streamData/counter');
-        const labelRef = ref(db, 'streamData/label');
-        const pauseRef = ref(db, 'streamData/isPaused');
-        const colorRef = ref(db, 'streamData/color');
+        const countRef = ref(db, "streamData/counter");
+        const labelRef = ref(db, "streamData/label");
+        const pauseRef = ref(db, "streamData/isPaused");
+        const legacyColorRef = ref(db, "streamData/color");
+        const visibilityRef = ref(db, "streamData/isCounterVisible");
+        const counterSettingsRef = ref(db, "streamData/widgets/counter");
+        const socialPromoRef = ref(db, "streamData/widgets/socialPromo");
+        const customTextRef = ref(db, "streamData/widgets/customText");
+        const twitchChatRef = ref(db, "streamData/widgets/twitchChat");
+
+        const counterDiv = document.getElementById("counter");
+        const socialPromo = document.getElementById("social-promo");
+        const youtubeRow = document.getElementById("youtube-row");
+        const twitchRow = document.getElementById("twitch-row");
+        const youtubeText = document.getElementById("youtube-text");
+        const twitchText = document.getElementById("twitch-text");
+        const customTextWidget = document.getElementById("custom-text-widget");
+        const twitchChatWidget = document.getElementById("twitch-chat-widget");
+        const twitchChatFrame = document.getElementById("twitch-chat-frame");
+
+        let currentChatUrl = "";
+        let latestCounterSettings = null;
+        let legacyCounterColor = DEFAULT_WIDGETS.counter.color;
+
+        function withDefaults(name, settings) {
+            return { ...DEFAULT_WIDGETS[name], ...(settings || {}) };
+        }
+
+        function withCounterDefaults(settings) {
+            const incoming = settings && typeof settings === "object" ? settings : {};
+            const color = typeof incoming.color === "string" && incoming.color.trim() !== ""
+                ? incoming.color
+                : legacyCounterColor;
+
+            return { ...DEFAULT_WIDGETS.counter, ...incoming, color };
+        }
+
+        function asNumber(value, fallback, min, max) {
+            const number = Number(value);
+            if (!Number.isFinite(number)) return fallback;
+            if (typeof min === "number" && number < min) return min;
+            if (typeof max === "number" && number > max) return max;
+            return number;
+        }
+
+        function asBoolean(value, fallback) {
+            return typeof value === "boolean" ? value : fallback;
+        }
+
+        function setWidgetPosition(element, settings) {
+            const x = asNumber(settings.x, 0);
+            const y = asNumber(settings.y, 0);
+            const scale = asNumber(settings.scale, 1, 0.05, 6);
+
+            element.style.left = `${x}px`;
+            element.style.top = `${y}px`;
+            element.style.transform = `scale(${scale})`;
+        }
+
+        function cleanText(value, fallback) {
+            if (typeof value !== "string") return fallback;
+            const trimmed = value.trim();
+            return trimmed || fallback;
+        }
+
+        function normalizeParentDomain(value) {
+            const fallback = window.location.hostname || "localhost";
+            const raw = cleanText(value, fallback);
+
+            try {
+                return new URL(raw).hostname || fallback;
+            } catch {
+                return raw.replace(/^https?:\/\//i, "").split("/")[0].split(":")[0] || fallback;
+            }
+        }
+
+        function safeCustomUrl(value) {
+            if (typeof value !== "string" || value.trim() === "") return "";
+
+            try {
+                const url = new URL(value.trim());
+                return url.protocol === "https:" ? url.href : "";
+            } catch {
+                return "";
+            }
+        }
+
+        function buildTwitchChatUrl(settings) {
+            const customUrl = safeCustomUrl(settings.customUrl);
+            if (customUrl) return customUrl;
+
+            const channel = cleanText(settings.channel, "");
+            if (!channel) return "";
+
+            const parent = normalizeParentDomain(settings.parentDomain);
+            const query = new URLSearchParams({ parent });
+            query.set("darkpopout", "");
+
+            return `https://www.twitch.tv/embed/${encodeURIComponent(channel)}/chat?${query.toString()}`;
+        }
+
+        function applyCounter(value) {
+            if (typeof value !== "undefined" && value !== null) {
+                document.getElementById("overlay-number").innerText = value;
+            }
+        }
+
+        function applyLabel(value) {
+            if (typeof value !== "undefined" && value !== null) {
+                document.getElementById("overlay-label").innerText = `${value} `;
+            }
+        }
+
+        function applyLegacyCounterColor(value) {
+            if (typeof value === "string" && value.trim() !== "") {
+                legacyCounterColor = value;
+
+                if (!latestCounterSettings || typeof latestCounterSettings.color !== "string" || latestCounterSettings.color.trim() === "") {
+                    applyCounterSettings(latestCounterSettings);
+                }
+            }
+        }
+
+        function applyCounterSettings(settingsValue) {
+            latestCounterSettings = settingsValue;
+
+            const settings = withCounterDefaults(settingsValue);
+            const x = asNumber(settings.x, DEFAULT_WIDGETS.counter.x);
+            const y = asNumber(settings.y, DEFAULT_WIDGETS.counter.y);
+            const scale = asNumber(settings.scale, DEFAULT_WIDGETS.counter.scale, 0.05, 6);
+            const fontSize = asNumber(settings.fontSize, DEFAULT_WIDGETS.counter.fontSize, 12, 180);
+            const anchor = settings.anchor === "left" ? "left" : "right";
+
+            counterDiv.style.color = settings.color;
+            counterDiv.style.fontSize = `${fontSize}px`;
+            counterDiv.style.top = `${y}px`;
+            counterDiv.style.left = anchor === "left" ? `${x}px` : "auto";
+            counterDiv.style.right = anchor === "right" ? `${x}px` : "auto";
+            counterDiv.style.transformOrigin = `top ${anchor}`;
+            counterDiv.style.transform = `scale(${scale})`;
+        }
+
+        function applyPause(value) {
+            document.getElementById("pause-screen").style.display = value === true ? "flex" : "none";
+        }
+
+        function applyCounterVisibility(value) {
+            counterDiv.style.display = value ? "block" : "none";
+        }
+
+        function applySocialPromo(settingsValue) {
+            const settings = withDefaults("socialPromo", settingsValue);
+            const text = cleanText(settings.text, DEFAULT_WIDGETS.socialPromo.text);
+            const hasVisibleRow = asBoolean(settings.youtubeVisible, true) || asBoolean(settings.twitchVisible, true);
+
+            setWidgetPosition(socialPromo, settings);
+            socialPromo.classList.toggle("is-visible", asBoolean(settings.visible, true) && hasVisibleRow);
+            socialPromo.classList.toggle("horizontal", settings.layout === "horizontal");
+            socialPromo.classList.toggle("has-background", asBoolean(settings.darkBackground, true));
+            youtubeRow.classList.toggle("hidden", !asBoolean(settings.youtubeVisible, true));
+            twitchRow.classList.toggle("hidden", !asBoolean(settings.twitchVisible, true));
+            youtubeText.textContent = text;
+            twitchText.textContent = text;
+        }
+
+        function applyCustomText(settingsValue) {
+            const settings = withDefaults("customText", settingsValue);
+            const text = typeof settings.text === "string" ? settings.text : "";
+            const fontSize = asNumber(settings.fontSize, DEFAULT_WIDGETS.customText.fontSize, 12, 180);
+
+            setWidgetPosition(customTextWidget, settings);
+            customTextWidget.textContent = text;
+            customTextWidget.style.color = cleanText(settings.color, DEFAULT_WIDGETS.customText.color);
+            customTextWidget.style.fontSize = `${fontSize}px`;
+            customTextWidget.classList.toggle("is-visible", asBoolean(settings.visible, false) && text.trim() !== "");
+        }
+
+        function applyTwitchChat(settingsValue) {
+            const settings = withDefaults("twitchChat", settingsValue);
+            const width = asNumber(settings.width, DEFAULT_WIDGETS.twitchChat.width, 160, 1920);
+            const height = asNumber(settings.height, DEFAULT_WIDGETS.twitchChat.height, 160, 1080);
+            const chatUrl = buildTwitchChatUrl(settings);
+            const shouldShow = asBoolean(settings.visible, false) && chatUrl !== "";
+
+            setWidgetPosition(twitchChatWidget, settings);
+            twitchChatWidget.style.width = `${width}px`;
+            twitchChatWidget.style.height = `${height}px`;
+            twitchChatWidget.classList.toggle("is-visible", shouldShow);
+
+            if (chatUrl && chatUrl !== currentChatUrl) {
+                currentChatUrl = chatUrl;
+                twitchChatFrame.src = chatUrl;
+            }
+
+            if (!chatUrl) {
+                currentChatUrl = "";
+                twitchChatFrame.removeAttribute("src");
+            }
+        }
 
         onValue(countRef, (snapshot) => {
             if (snapshot.exists()) {
-                document.getElementById('overlay-number').innerText = snapshot.val();
+                applyCounter(snapshot.val());
             }
         });
 
         onValue(labelRef, (snapshot) => {
             if (snapshot.exists()) {
-                document.getElementById('overlay-label').innerText = snapshot.val() + " ";
+                applyLabel(snapshot.val());
             }
         });
 
-        onValue(colorRef, (snapshot) => {
+        onValue(legacyColorRef, (snapshot) => {
             if (snapshot.exists()) {
-                document.getElementById('counter').style.color = snapshot.val();
+                applyLegacyCounterColor(snapshot.val());
             }
         });
 
         onValue(pauseRef, (snapshot) => {
             if (snapshot.exists()) {
-                const isPaused = snapshot.val();
-                const pauseScreen = document.getElementById('pause-screen');
-
-                if (isPaused === true) {
-                    pauseScreen.style.display = "flex";
-                } else {
-                    pauseScreen.style.display = "none";
-                }
+                applyPause(snapshot.val());
             }
         });
-        const visibilityRef = ref(db, 'streamData/isCounterVisible');
 
         onValue(visibilityRef, (snapshot) => {
             const isVisible = snapshot.exists() ? snapshot.val() : true;
-            const counterDiv = document.getElementById('counter');
+            applyCounterVisibility(isVisible);
+        });
 
-            if (isVisible) {
-                counterDiv.style.display = "block";
-            } else {
-                counterDiv.style.display = "none";
-            }
+        onValue(counterSettingsRef, (snapshot) => {
+            applyCounterSettings(snapshot.val());
+        });
+
+        onValue(socialPromoRef, (snapshot) => {
+            applySocialPromo(snapshot.val());
+        });
+
+        onValue(customTextRef, (snapshot) => {
+            applyCustomText(snapshot.val());
+        });
+
+        onValue(twitchChatRef, (snapshot) => {
+            applyTwitchChat(snapshot.val());
         });
     </script>
 </body>

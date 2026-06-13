@@ -6,18 +6,78 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Stream Remote</title>
     <style>
+        :root {
+            color-scheme: dark;
+            --bg: #17191f;
+            --panel: #242833;
+            --panel-soft: #2f3442;
+            --line: #42495b;
+            --text: #ffffff;
+            --muted: #b8c0d6;
+            --blue: #2388ff;
+            --green: #32b768;
+            --red: #ef4444;
+            --orange: #f59e0b;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 16px;
+            text-align: center;
+        }
+
+        .page {
+            width: min(920px, 100%);
+            margin: 0 auto;
+        }
+
+        .panel {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+            margin-bottom: 16px;
+            padding: 16px;
+            text-align: left;
+        }
+
         .panel-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #444;
-            margin-bottom: 15px;
+            gap: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--line);
+            cursor: pointer;
+            margin-bottom: 14px;
+            user-select: none;
+        }
+
+        .panel-header h2,
+        h2 {
+            color: var(--muted);
+            font-size: 15px;
+            letter-spacing: 2px;
+            margin: 0;
+            text-align: center;
+            text-transform: uppercase;
+        }
+
+        .panel-title {
+            flex: 1;
         }
 
         .switch {
             position: relative;
             display: inline-block;
+            flex: 0 0 auto;
             width: 50px;
             height: 26px;
         }
@@ -31,16 +91,13 @@
         .slider {
             position: absolute;
             cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #f44336;
-            transition: 0.3s;
+            inset: 0;
+            background-color: var(--red);
             border-radius: 26px;
+            transition: 0.2s;
         }
 
-        .slider:before {
+        .slider::before {
             position: absolute;
             content: "";
             height: 18px;
@@ -48,154 +105,538 @@
             left: 4px;
             bottom: 4px;
             background-color: white;
-            transition: 0.3s;
             border-radius: 50%;
+            transition: 0.2s;
         }
 
-        input:checked+.slider {
-            background-color: #4CAF50;
+        input:checked + .slider {
+            background-color: var(--green);
         }
 
-        input:checked+.slider:before {
+        input:checked + .slider::before {
             transform: translateX(24px);
         }
 
-        body {
-            font-family: sans-serif;
-            background: #1e1e1e;
-            color: white;
-            text-align: center;
-            padding: 20px;
-            margin: 0;
+        .field-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
         }
 
-        .panel {
-            background: #2d2d2d;
-            padding: 20px;
-            border-radius: 12px;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .field.full {
+            grid-column: 1 / -1;
+        }
+
+        label,
+        .toggle-label {
+            color: var(--muted);
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        input,
+        select {
+            width: 100%;
+            min-height: 44px;
+            border: 1px solid var(--line);
+            border-radius: 6px;
+            background: #151821;
+            color: var(--text);
+            font-size: 16px;
+            padding: 10px;
+        }
+
+        input[type="color"] {
+            min-height: 48px;
+            padding: 3px;
+            cursor: pointer;
         }
 
         button {
-            font-size: 22px;
-            padding: 15px 25px;
-            margin: 10px;
+            min-height: 44px;
             border: none;
-            border-radius: 8px;
-            cursor: pointer;
+            border-radius: 6px;
             color: white;
-            font-weight: bold;
-            width: 40%;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 700;
+            padding: 10px 14px;
         }
 
-        input {
-            font-size: 22px;
-            padding: 10px;
-            margin: 10px;
-            border-radius: 5px;
-            border: none;
+        button:active {
+            transform: translateY(1px);
+        }
+
+        .primary {
+            background: var(--blue);
+        }
+
+        .success {
+            background: var(--green);
+        }
+
+        .danger {
+            background: var(--red);
+        }
+
+        .warning {
+            background: var(--orange);
+        }
+
+        .secondary {
+            background: var(--panel-soft);
+            border: 1px solid var(--line);
+        }
+
+        .wide {
+            width: 100%;
+        }
+
+        .counter-display {
+            font-size: 48px;
+            font-weight: 900;
+            margin: 0 0 12px;
             text-align: center;
-            width: 60%;
         }
 
-        #add {
-            background: #4CAF50;
+        .button-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+            margin-bottom: 12px;
         }
 
-        #sub {
-            background: #f44336;
+        .move-grid {
+            display: grid;
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+            gap: 8px;
+            margin-top: 12px;
         }
 
-        #pause {
-            background: #ff9800;
-            width: 90%;
-            padding: 20px;
+        .move-grid button {
+            font-size: 14px;
+            padding: 8px;
         }
 
-        #update-label-btn,
-        #set-number-btn {
-            background: #2196F3;
-            width: 60%;
-            font-size: 18px;
+        .toggle-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            min-height: 44px;
+            padding: 8px 10px;
+            border: 1px solid var(--line);
+            border-radius: 6px;
+            background: #151821;
+        }
+
+        #login-panel {
+            margin-top: 8vh;
+            text-align: center;
+        }
+
+        #login-panel input {
+            margin-bottom: 10px;
+        }
+
+        .password-field {
+            position: relative;
+        }
+
+        .password-field input {
+            padding-right: 72px;
+        }
+
+        .password-toggle {
+            background: transparent;
+            color: var(--muted);
+            font-size: 13px;
+            min-height: auto;
+            padding: 8px;
+            position: absolute;
+            right: 6px;
+            top: 29px;
         }
 
         #login-btn {
-            background: #2196F3;
-            width: 65%;
+            width: 100%;
+            max-width: 360px;
         }
 
-        h1 {
-            font-size: 50px;
-            margin: 10px 0;
+        .collapse-toggle {
+            align-items: center;
+            background: transparent;
+            border: 0;
+            border-radius: 6px;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            flex: 0 0 auto;
+            justify-content: center;
+            min-height: 36px;
+            padding: 4px;
+            transition: transform 0.2s;
+            width: 50px;
         }
 
-        h2 {
-            margin-top: 0;
-            color: #aaa;
-            font-size: 18px;
-            text-transform: uppercase;
-            letter-spacing: 2px;
+        .collapse-toggle svg {
+            display: block;
+        }
+
+        .panel-body {
+            display: block;
+        }
+
+        .panel.is-collapsed .panel-header {
+            border-bottom: 0;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .panel.is-collapsed .panel-body {
+            display: none;
+        }
+
+        .panel.is-collapsed .collapse-toggle {
+            transform: rotate(-90deg);
+        }
+
+        @media (max-width: 560px) {
+            body {
+                padding: 10px;
+            }
+
+            .panel {
+                padding: 14px;
+            }
+
+            .panel-header {
+                gap: 8px;
+            }
+
+            .move-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .move-grid .reset-button {
+                grid-column: 1 / -1;
+            }
         }
     </style>
 </head>
 
 <body>
-    <div id="login-panel" class="panel" style="display: block;">
-        <h2>Stream Remote Login</h2>
-        <input type="email" id="login-email" placeholder="Email">
-        <input type="password" id="login-password" placeholder="Password">
-        <br>
-        <button id="login-btn">Secure Login</button>
-        <p id="login-error" style="color: #ff5252; display: none; font-weight: bold;">Access Denied.</p>
-    </div>
-
-    <div id="control-panel" style="display: none;">
-
-        <div class="panel">
-            <h2>Stream Controls</h2>
-            <button id="pause">⏸ Pause Stream</button>
-        </div>
-
-        <div class="panel">
-            <div class="panel-header">
-                <label class="switch">
-                    <input type="checkbox" id="visibility-toggle" checked>
-                    <span class="slider"></span>
-                </label>
-
-                <h2 style="margin: 0;">Counter Controls</h2>
-
-                <span id="chevron-btn"
-                    style="cursor: pointer; transition: transform 0.3s; display: flex; align-items: center;">
-                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"
-                        stroke-linecap="round" stroke-linejoin="round">
-                        <polyline points="6 9 12 15 18 9"></polyline>
-                    </svg>
-                </span>
-            </div>
-
-            <div id="counter-content" style="display: block;">
-                <h1 id="counter-display">0</h1>
-                <button id="sub">-1</button>
-                <button id="add">+1</button>
-
-                <input type="text" id="custom-label-input" placeholder="e.g., Deaths, Wins">
-                <button id="update-label-btn">Set Label</button>
-
-                <input type="number" id="exact-number-input" placeholder="Type specific #">
-                <button id="set-number-btn">Set #</button>
-
-                <div style="margin-top: 15px;">
-                    <label for="color-picker"
-                        style="font-size: 20px; font-weight: bold; margin-right: 10px; vertical-align: middle;">Text
-                        Color:</label>
-                    <input type="color" id="color-picker" value="#ffffff"
-                        style="width: 50px; height: 50px; padding: 0; cursor: pointer; border: none; vertical-align: middle;">
+    <main class="page">
+        <div id="login-panel" class="panel" style="display: block;">
+            <h2>Stream Remote Login</h2>
+            <div class="field-grid" style="margin-top: 16px;">
+                <div class="field full">
+                    <label for="login-email">Email</label>
+                    <input type="email" id="login-email" autocomplete="email">
+                </div>
+                <div class="field full password-field">
+                    <label for="login-password">Password</label>
+                    <input type="password" id="login-password" autocomplete="current-password">
+                    <button id="toggle-password" class="password-toggle" type="button"
+                        aria-controls="login-password" aria-label="Show password">Show</button>
                 </div>
             </div>
+            <button id="login-btn" class="primary">Secure Login</button>
+            <p id="login-error" style="color: #ff6b6b; display: none; font-weight: bold;">Access Denied.</p>
         </div>
-    </div>
+
+        <div id="control-panel" style="display: none;">
+            <section class="panel" data-collapse-section="stream-controls">
+                <div class="panel-header">
+                    <span style="width: 50px;"></span>
+                    <h2 class="panel-title">Stream Controls</h2>
+                    <button class="collapse-toggle" type="button" data-collapse-target="stream-controls-content"
+                        aria-expanded="true" aria-controls="stream-controls-content" title="Collapse section">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </button>
+                </div>
+                <div id="stream-controls-content" class="panel-body">
+                    <button id="pause" class="warning wide">Pause Stream</button>
+                </div>
+            </section>
+
+            <section class="panel" data-collapse-section="counter">
+                <div class="panel-header">
+                    <label class="switch" title="Counter visibility">
+                        <input type="checkbox" id="visibility-toggle" checked>
+                        <span class="slider"></span>
+                    </label>
+                    <h2 class="panel-title">Counter</h2>
+                    <button class="collapse-toggle" type="button" data-collapse-target="counter-content"
+                        aria-expanded="true" aria-controls="counter-content" title="Collapse section">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </button>
+                </div>
+
+                <div id="counter-content" class="panel-body">
+                    <div id="counter-display" class="counter-display">0</div>
+                    <div class="button-grid">
+                        <button id="sub" class="danger">-1</button>
+                        <button id="add" class="success">+1</button>
+                    </div>
+
+                    <div class="field-grid">
+                        <div class="field">
+                            <label for="custom-label-input">Label</label>
+                            <input type="text" id="custom-label-input" placeholder="Deaths, Wins">
+                        </div>
+                        <div class="field">
+                            <label for="exact-number-input">Exact Number</label>
+                            <input type="number" id="exact-number-input" min="0" placeholder="0">
+                        </div>
+                        <div class="field">
+                            <label for="counter-color">Counter Color</label>
+                            <input type="color" id="counter-color" value="#ffffff">
+                        </div>
+                        <div class="field">
+                            <label for="counter-anchor">Anchor</label>
+                            <select id="counter-anchor">
+                                <option value="right">Right</option>
+                                <option value="left">Left</option>
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label for="counter-x">X</label>
+                            <input type="number" id="counter-x" step="5">
+                        </div>
+                        <div class="field">
+                            <label for="counter-y">Y</label>
+                            <input type="number" id="counter-y" step="5">
+                        </div>
+                        <div class="field">
+                            <label for="counter-scale">Scale</label>
+                            <input type="number" id="counter-scale" min="0.25" max="4" step="0.05">
+                        </div>
+                        <div class="field">
+                            <label for="counter-font-size">Font Size</label>
+                            <input type="number" id="counter-font-size" min="12" max="180" step="1">
+                        </div>
+                    </div>
+
+                    <div class="button-grid" style="margin-top: 12px;">
+                        <button id="update-label-btn" class="primary">Set Label</button>
+                        <button id="set-number-btn" class="primary">Set Number</button>
+                    </div>
+
+                    <div class="move-grid">
+                        <button class="secondary" data-move-widget="counter" data-direction="up">&uarr; Up</button>
+                        <button class="secondary" data-move-widget="counter" data-direction="down">&darr; Down</button>
+                        <button class="secondary" data-move-widget="counter" data-direction="left">&larr; Left</button>
+                        <button class="secondary" data-move-widget="counter" data-direction="right">&rarr; Right</button>
+                        <button class="secondary reset-button" data-reset-widget="counter">Reset Position</button>
+                    </div>
+                </div>
+            </section>
+
+            <section class="panel" data-collapse-section="social-promo">
+                <div class="panel-header">
+                    <label class="switch" title="Social promo visibility">
+                        <input type="checkbox" id="social-visible">
+                        <span class="slider"></span>
+                    </label>
+                    <h2 class="panel-title">Social Promo</h2>
+                    <button class="collapse-toggle" type="button" data-collapse-target="social-promo-content"
+                        aria-expanded="true" aria-controls="social-promo-content" title="Collapse section">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </button>
+                </div>
+
+                <div id="social-promo-content" class="panel-body">
+                    <div class="field-grid">
+                        <div class="field full">
+                            <label for="social-text">Text</label>
+                            <input type="text" id="social-text" placeholder="Mr_Flashkid">
+                        </div>
+                        <div class="toggle-row">
+                            <span class="toggle-label">YouTube Row</span>
+                            <label class="switch">
+                                <input type="checkbox" id="social-youtube-visible">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="toggle-row">
+                            <span class="toggle-label">Twitch Row</span>
+                            <label class="switch">
+                                <input type="checkbox" id="social-twitch-visible">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="toggle-row">
+                            <span class="toggle-label">Dark Background</span>
+                            <label class="switch">
+                                <input type="checkbox" id="social-background">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="field">
+                            <label for="social-layout">Layout</label>
+                            <select id="social-layout">
+                                <option value="vertical">Vertical</option>
+                                <option value="horizontal">Horizontal</option>
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label for="social-x">X</label>
+                            <input type="number" id="social-x" step="5">
+                        </div>
+                        <div class="field">
+                            <label for="social-y">Y</label>
+                            <input type="number" id="social-y" step="5">
+                        </div>
+                        <div class="field">
+                            <label for="social-scale">Scale</label>
+                            <input type="number" id="social-scale" min="0.25" max="4" step="0.05">
+                        </div>
+                    </div>
+
+                    <div class="move-grid">
+                        <button class="secondary" data-move-widget="socialPromo" data-direction="up">&uarr; Up</button>
+                        <button class="secondary" data-move-widget="socialPromo" data-direction="down">&darr; Down</button>
+                        <button class="secondary" data-move-widget="socialPromo" data-direction="left">&larr; Left</button>
+                        <button class="secondary" data-move-widget="socialPromo" data-direction="right">&rarr; Right</button>
+                        <button class="secondary reset-button" data-reset-widget="socialPromo">Reset Position</button>
+                    </div>
+                </div>
+            </section>
+
+            <section class="panel" data-collapse-section="custom-text">
+                <div class="panel-header">
+                    <label class="switch" title="Custom text visibility">
+                        <input type="checkbox" id="custom-text-visible">
+                        <span class="slider"></span>
+                    </label>
+                    <h2 class="panel-title">Custom Text</h2>
+                    <button class="collapse-toggle" type="button" data-collapse-target="custom-text-content"
+                        aria-expanded="true" aria-controls="custom-text-content" title="Collapse section">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </button>
+                </div>
+
+                <div id="custom-text-content" class="panel-body">
+                    <div class="field-grid">
+                        <div class="field full">
+                            <label for="custom-text-value">Text</label>
+                            <input type="text" id="custom-text-value" placeholder="Live message">
+                        </div>
+                        <div class="field">
+                            <label for="custom-text-x">X</label>
+                            <input type="number" id="custom-text-x" step="5">
+                        </div>
+                        <div class="field">
+                            <label for="custom-text-y">Y</label>
+                            <input type="number" id="custom-text-y" step="5">
+                        </div>
+                        <div class="field">
+                            <label for="custom-text-scale">Scale</label>
+                            <input type="number" id="custom-text-scale" min="0.25" max="4" step="0.05">
+                        </div>
+                        <div class="field">
+                            <label for="custom-text-font-size">Font Size</label>
+                            <input type="number" id="custom-text-font-size" min="12" max="180" step="1">
+                        </div>
+                        <div class="field">
+                            <label for="custom-text-color">Custom Text Color</label>
+                            <input type="color" id="custom-text-color" value="#ffffff">
+                        </div>
+                    </div>
+
+                    <div class="move-grid">
+                        <button class="secondary" data-move-widget="customText" data-direction="up">&uarr; Up</button>
+                        <button class="secondary" data-move-widget="customText" data-direction="down">&darr; Down</button>
+                        <button class="secondary" data-move-widget="customText" data-direction="left">&larr; Left</button>
+                        <button class="secondary" data-move-widget="customText" data-direction="right">&rarr; Right</button>
+                        <button class="secondary reset-button" data-reset-widget="customText">Reset Position</button>
+                    </div>
+                </div>
+            </section>
+
+            <section class="panel" data-collapse-section="twitch-chat">
+                <div class="panel-header">
+                    <label class="switch" title="Twitch chat visibility">
+                        <input type="checkbox" id="chat-visible">
+                        <span class="slider"></span>
+                    </label>
+                    <h2 class="panel-title">Twitch Chat</h2>
+                    <button class="collapse-toggle" type="button" data-collapse-target="twitch-chat-content"
+                        aria-expanded="true" aria-controls="twitch-chat-content" title="Collapse section">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </button>
+                </div>
+
+                <div id="twitch-chat-content" class="panel-body">
+                    <div class="field-grid">
+                        <div class="field">
+                            <label for="chat-channel">Channel</label>
+                            <input type="text" id="chat-channel" placeholder="mr_flashkid">
+                        </div>
+                        <div class="field">
+                            <label for="chat-parent-domain">Parent Domain</label>
+                            <input type="text" id="chat-parent-domain" placeholder="mrflashkid.live">
+                        </div>
+                        <div class="field full">
+                            <label for="chat-custom-url">Custom Chat URL</label>
+                            <input type="url" id="chat-custom-url" placeholder="https://www.twitch.tv/embed/...">
+                        </div>
+                        <div class="field">
+                            <label for="chat-x">X</label>
+                            <input type="number" id="chat-x" step="5">
+                        </div>
+                        <div class="field">
+                            <label for="chat-y">Y</label>
+                            <input type="number" id="chat-y" step="5">
+                        </div>
+                        <div class="field">
+                            <label for="chat-width">Width</label>
+                            <input type="number" id="chat-width" min="160" step="10">
+                        </div>
+                        <div class="field">
+                            <label for="chat-height">Height</label>
+                            <input type="number" id="chat-height" min="160" step="10">
+                        </div>
+                        <div class="field">
+                            <label for="chat-scale">Scale</label>
+                            <input type="number" id="chat-scale" min="0.25" max="4" step="0.05">
+                        </div>
+                    </div>
+
+                    <div class="move-grid">
+                        <button class="secondary" data-move-widget="twitchChat" data-direction="up">&uarr; Up</button>
+                        <button class="secondary" data-move-widget="twitchChat" data-direction="down">&darr; Down</button>
+                        <button class="secondary" data-move-widget="twitchChat" data-direction="left">&larr; Left</button>
+                        <button class="secondary" data-move-widget="twitchChat" data-direction="right">&rarr; Right</button>
+                        <button class="secondary reset-button" data-reset-widget="twitchChat">Reset Position</button>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
 
     <script type="module" src="script.js"></script>
 </body>
